@@ -315,11 +315,17 @@ export function useDevice() {
 
     if (!pressed) return
 
-    if (key !== 'Num3' && key !== 'Num4') return
-
     if (!controlKeysDown.size) return
 
-    keyGroup.value = 'left-keys2'
+    if (key === 'Num1' || key === 'Num2') {
+      keyGroup.value = 'left-keys'
+
+      return
+    }
+
+    if (key === 'Num3' || key === 'Num4') {
+      keyGroup.value = 'left-keys2'
+    }
   }
 
   useTauriListen<DeviceEvent>(LISTEN_KEY.DEVICE_CHANGED, ({ payload }) => {
