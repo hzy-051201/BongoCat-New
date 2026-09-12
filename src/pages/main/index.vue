@@ -12,9 +12,12 @@ import { round } from 'es-toolkit'
 import { nth } from 'es-toolkit/compat'
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 
+import type { Model } from '@/stores/model'
+
 import { useAppMenu } from '@/composables/useAppMenu'
 import { useDevice } from '@/composables/useDevice'
 import { useGamepad } from '@/composables/useGamepad'
+import { useKeyGroup } from '@/composables/useKeyGroup'
 import { useModel } from '@/composables/useModel'
 import { useTauriListen } from '@/composables/useTauriListen'
 import { LISTEN_KEY } from '@/constants'
@@ -35,6 +38,7 @@ const catStore = useCatStore()
 const { getBaseMenu, getExitMenu } = useAppMenu()
 const modelStore = useModelStore()
 const generalStore = useGeneralStore()
+const keyGroup = useKeyGroup()
 const resizing = ref(false)
 const backgroundImagePath = ref<string>()
 const { stickActive } = useGamepad()
@@ -55,6 +59,33 @@ useEventListener('resize', () => {
   debouncedResize()
 })
 
+async function refreshSupportKeys(model: Model, clearPressed = false) {
+  clearObject([modelStore.supportKeys])
+
+  if (clearPressed) {
+    clearObject([modelStore.pressedKeys])
+  }
+
+  const resourcePath = join(model.path, 'resources')
+  const groups = ['left-keys', 'right-keys']
+
+  if (keyGroup.value === 'left-keys2') {
+    groups.push('left-keys2')
+  }
+
+  for (const groupName of groups) {
+    const groupDir = join(resourcePath, groupName)
+    const files = await readDir(groupDir).catch(() => [])
+    const imageFiles = files.filter(file => isImage(file.name))
+
+    for (const file of imageFiles) {
+      const fileName = file.name.split('.')[0]
+
+      modelStore.supportKeys[fileName] = join(groupDir, file.name)
+    }
+  }
+}
+
 watch(() => modelStore.currentModel, async (model) => {
   if (!model) return
 
@@ -66,25 +97,18 @@ watch(() => modelStore.currentModel, async (model) => {
 
   backgroundImagePath.value = existed ? convertFileSrc(path) : void 0
 
-  clearObject([modelStore.supportKeys, modelStore.pressedKeys])
-
-  const resourcePath = join(model.path, 'resources')
-  const groups = ['left-keys', 'right-keys']
-
-  for await (const groupName of groups) {
-    const groupDir = join(resourcePath, groupName)
-    const files = await readDir(groupDir).catch(() => [])
-    const imageFiles = files.filter(file => isImage(file.name))
-
-    for (const file of imageFiles) {
-      const fileName = file.name.split('.')[0]
-
-      modelStore.supportKeys[fileName] = join(groupDir, file.name)
-    }
-  }
+  await refreshSupportKeys(model, true)
 
   modelStore.modelReady = true
 }, { deep: true, immediate: true })
+
+watch(keyGroup, async () => {
+  const model = modelStore.currentModel
+
+  if (!model) return
+
+  await refreshSupportKeys(model)
+})
 
 watch([() => catStore.window.scale, modelSize], async ([scale, modelSize]) => {
   if (!modelSize) return

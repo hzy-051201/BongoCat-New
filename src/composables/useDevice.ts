@@ -19,6 +19,7 @@ import { getCursorMonitor } from '@/utils/monitor'
 import { isMac, isWindows } from '@/utils/platform'
 
 import { INVOKE_KEY, LISTEN_KEY, WINDOW_LABEL } from '../constants'
+import { useKeyGroup } from './useKeyGroup'
 import { useModel } from './useModel'
 import { useTauriListen } from './useTauriListen'
 
@@ -298,10 +299,35 @@ export function useDevice() {
     releaseTimers.set(key, timer)
   }
 
+  const keyGroup = useKeyGroup()
+  const controlKeysDown = new Set<string>()
+
+  const applyKeyGroupShortcut = (pressed: boolean, key: string) => {
+    if (key === 'ControlLeft' || key === 'ControlRight') {
+      if (pressed) {
+        controlKeysDown.add(key)
+      } else {
+        controlKeysDown.delete(key)
+      }
+
+      return
+    }
+
+    if (!pressed) return
+
+    if (key !== 'Num3' && key !== 'Num4') return
+
+    if (!controlKeysDown.size) return
+
+    keyGroup.value = 'left-keys2'
+  }
+
   useTauriListen<DeviceEvent>(LISTEN_KEY.DEVICE_CHANGED, ({ payload }) => {
     const { kind, value } = payload
 
     if (kind === 'KeyboardPress' || kind === 'KeyboardRelease') {
+      applyKeyGroupShortcut(kind === 'KeyboardPress', value)
+
       const nextValue = getSupportedKey(value)
 
       if (!nextValue) return
