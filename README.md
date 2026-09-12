@@ -1,4 +1,4 @@
-# BongoCat-New（增强修改版）
+# BongoCat-New（修改版）
 
 > 本项目基于 [ayangweb/BongoCat](https://github.com/ayangweb/BongoCat) 修改而来，**并非官方版本**。
 > 发布时间仅提供 Windows 安装包（x64 / i686 / arm64）。
