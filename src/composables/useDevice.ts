@@ -299,7 +299,7 @@ export function useDevice() {
     releaseTimers.set(key, timer)
   }
 
-  const keyGroup = useKeyGroup()
+  const { setKeyGroup } = useKeyGroup()
   const controlKeysDown = new Set<string>()
 
   const applyKeyGroupShortcut = (pressed: boolean, key: string) => {
@@ -318,13 +318,13 @@ export function useDevice() {
     if (!controlKeysDown.size) return
 
     if (key === 'Num1' || key === 'Num2') {
-      keyGroup.value = 'left-keys'
+      setKeyGroup('left-keys')
 
       return
     }
 
     if (key === 'Num3' || key === 'Num4') {
-      keyGroup.value = 'left-keys2'
+      setKeyGroup('left-keys2')
     }
   }
 
