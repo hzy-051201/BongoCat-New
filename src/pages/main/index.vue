@@ -15,6 +15,7 @@ import { onMounted, onUnmounted, ref, watch } from 'vue'
 import type { Model } from '@/stores/model'
 
 import { useAppMenu } from '@/composables/useAppMenu'
+import { useBehaviorShortcuts } from '@/composables/useBehaviorShortcuts'
 import { useDevice } from '@/composables/useDevice'
 import { useGamepad } from '@/composables/useGamepad'
 import { useKeyGroup } from '@/composables/useKeyGroup'
@@ -38,10 +39,12 @@ const catStore = useCatStore()
 const { getBaseMenu, getExitMenu } = useAppMenu()
 const modelStore = useModelStore()
 const generalStore = useGeneralStore()
-const keyGroup = useKeyGroup()
+const { keyGroup, keyGroupVersion } = useKeyGroup()
 const resizing = ref(false)
 const backgroundImagePath = ref<string>()
 const { stickActive } = useGamepad()
+
+useBehaviorShortcuts()
 
 onMounted(startListening)
 
@@ -102,7 +105,7 @@ watch(() => modelStore.currentModel, async (model) => {
   modelStore.modelReady = true
 }, { deep: true, immediate: true })
 
-watch(keyGroup, async () => {
+watch(keyGroupVersion, async () => {
   const model = modelStore.currentModel
 
   if (!model) return
